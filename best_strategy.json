@@ -1,0 +1,30 @@
+{
+  "strategy": "trend_following",
+  "symbol": "DOT/USDT",
+  "timeframe": "1d",
+  "regime": "volatile",
+  "params": {
+    "ema_f": 12,
+    "ema_s": 50,
+    "adx_min": 18,
+    "atr_sl": 1.5,
+    "atr_tp": 5.0,
+    "cooldown": 3
+  },
+  "metrics": {
+    "ret_is": 3.5,
+    "ret_oos": 6.01,
+    "wr_oos": 1.0,
+    "trades_is": 15,
+    "trades_oos": 10,
+    "windows_ok": 3,
+    "mc_p25": 5.45,
+    "sharpe": 23.83,
+    "sortino": 48960576697.32,
+    "max_dd": 0.001,
+    "profit_factor": 49.02,
+    "calmar": 48.78,
+    "hurst": 0.0
+  },
+  "score": 30.143
+}
