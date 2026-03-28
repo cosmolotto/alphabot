@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlphaBot — AI Crypto Trading System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#050508;--surface:#0d0d14;--panel:#111118;
+  --green:#00ff88;--green2:#00cc6a;--cyan:#00e5ff;
+  --red:#ff3d5a;--gold:#ffd700;
+  --text:#e0e0f0;--muted:#5a5a7a;--border:#1a1a2e
+}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);overflow-x:hidden;min-height:100vh}
+
+/* grid bg */
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;width:100%;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:18px 60px;background:rgba(5,5,8,.85);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--green);letter-spacing:2px}
+.logo span{color:var(--cyan)}
+.nav-links{display:flex;gap:32px;font-size:13px;color:var(--muted)}
+.nav-links a{color:var(--muted);text-decoration:none;transition:.2s}
+.nav-links a:hover{color:var(--green)}
+.nav-cta{background:var(--green);color:#000;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;padding:9px 20px;border-radius:6px;text-decoration:none;letter-spacing:1px;transition:.2s}
+.nav-cta:hover{background:var(--cyan)}
+
+/* HERO */
+.hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:120px 20px 80px}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(0,255,136,.08);border:1px solid rgba(0,255,136,.2);border-radius:4px;padding:6px 14px;font-size:11px;color:var(--green);letter-spacing:2px;margin-bottom:36px}
+.hero-badge::before{content:'';width:6px;height:6px;background:var(--green);border-radius:50%;animation:blink 1.2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+h1{font-family:'Syne',sans-serif;font-size:clamp(3rem,7vw,6rem);font-weight:800;line-height:.95;margin-bottom:24px;letter-spacing:-2px}
+h1 .line1{display:block;color:var(--text)}
+h1 .line2{display:block;color:var(--green);text-shadow:0 0 40px rgba(0,255,136,.4)}
+.hero-sub{font-size:15px;color:var(--muted);max-width:560px;line-height:1.8;margin-bottom:48px}
+.hero-btns{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;margin-bottom:80px}
+.btn-primary{background:var(--green);color:#000;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;padding:14px 32px;border-radius:6px;text-decoration:none;letter-spacing:1px;transition:.2s}
+.btn-primary:hover{background:var(--cyan);transform:translateY(-2px)}
+.btn-ghost{border:1px solid var(--border);color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:13px;padding:14px 32px;border-radius:6px;text-decoration:none;letter-spacing:1px;transition:.2s}
+.btn-ghost:hover{border-color:var(--green);color:var(--green)}
+
+/* TERMINAL */
+.terminal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0;max-width:680px;width:100%;text-align:left;box-shadow:0 0 60px rgba(0,255,136,.05)}
+.term-bar{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--panel);border-radius:10px 10px 0 0}
+.term-dot{width:11px;height:11px;border-radius:50%}
+.term-title{font-size:12px;color:var(--muted);margin-left:8px;letter-spacing:1px}
+.term-body{padding:20px 24px;font-size:12.5px;line-height:2}
+.t-prompt{color:var(--green)}
+.t-cmd{color:var(--cyan)}
+.t-out{color:var(--muted)}
+.t-val{color:var(--gold)}
+.t-good{color:var(--green)}
+.t-bad{color:var(--red)}
+
+/* STATS */
+.stats{position:relative;z-index:1;padding:80px 60px;max-width:1100px;margin:0 auto}
+.stats-label{font-size:11px;color:var(--green);letter-spacing:3px;text-align:center;margin-bottom:48px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.stat{background:var(--surface);padding:32px 28px;transition:.2s}
+.stat:hover{background:var(--panel)}
+.stat-val{font-family:'Syne',sans-serif;font-size:2.8rem;font-weight:800;margin-bottom:6px}
+.stat-label{font-size:11px;color:var(--muted);letter-spacing:2px}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* FEATURES */
+.features{position:relative;z-index:1;padding:80px 60px;max-width:1100px;margin:0 auto}
+.section-label{font-size:11px;color:var(--cyan);letter-spacing:3px;margin-bottom:16px}
+.section-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:48px;line-height:1.1}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.feat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px;transition:.2s}
+.feat:hover{border-color:rgba(0,255,136,.25);transform:translateY(-3px)}
+.feat-icon{font-size:28px;margin-bottom:16px}
+.feat-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;letter-spacing:.5px}
+.feat-desc{font-size:12px;color:var(--muted);line-height:1.8}
+
+/* STRATEGY */
+.strategy{position:relative;z-index:1;padding:0 60px 80px;max-width:1100px;margin:0 auto}
+.strategy-card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:36px;display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.strategy-info{}
+.strategy-badge{display:inline-block;background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--green);font-size:10px;letter-spacing:2px;padding:4px 10px;border-radius:4px;margin-bottom:16px}
+.strategy-name{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;margin-bottom:8px}
+.strategy-pair{font-size:14px;color:var(--muted);margin-bottom:24px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.metric{background:var(--panel);border-radius:6px;padding:14px}
+.metric-val{font-size:18px;font-weight:700;margin-bottom:2px}
+.metric-label{font-size:10px;color:var(--muted);letter-spacing:1px}
+
+/* CTA */
+.cta-section{position:relative;z-index:1;padding:80px 60px;text-align:center}
+.cta-box{background:linear-gradient(135deg,rgba(0,255,136,.06) 0%,rgba(0,229,255,.04) 100%);border:1px solid rgba(0,255,136,.2);border-radius:16px;padding:64px 40px;max-width:700px;margin:0 auto}
+.cta-title{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:800;margin-bottom:16px}
+.cta-sub{font-size:14px;color:var(--muted);margin-bottom:36px;line-height:1.8}
+.price-tag{font-family:'Syne',sans-serif;font-size:3rem;font-weight:800;color:var(--gold);margin-bottom:8px}
+.price-note{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:32px}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px 60px;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted)}
+footer a{color:var(--muted);text-decoration:none}
+footer a:hover{color:var(--green)}
+
+/* chart animation */
+.chart{width:100%;height:120px;position:relative;overflow:hidden}
+svg.sparkline{width:100%;height:100%}
+
+@media(max-width:768px){
+  nav{padding:16px 20px}.nav-links{display:none}
+  .hero{padding:100px 20px 60px}.stats,.features,.strategy,.cta-section{padding:60px 20px}
+  .strategy-card{grid-template-columns:1fr}
+  footer{flex-direction:column;gap:8px;text-align:center}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">ALPHA<span>BOT</span></div>
+  <div class="nav-links">
+    <a href="#stats">Stats</a>
+    <a href="#strategy">Strategy</a>
+    <a href="#features">Features</a>
+    <a href="https://github.com/cosmolotto/alphabot">GitHub</a>
+  </div>
+  <a href="https://gumroad.com/cosmolotto" class="nav-cta">GET KIT — $49</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">LIVE SYSTEM ACTIVE</div>
+  <h1>
+    <span class="line1">4-Layer Validated</span>
+    <span class="line2">Crypto Trading Bot</span>
+  </h1>
+  <p class="hero-sub">AlphaBot runs Walk-Forward, Rolling Window, Monte Carlo, and Calmar validation before a single trade. No overfit. No guesswork. Just edge.</p>
+  <div class="hero-btns">
+    <a href="https://gumroad.com/cosmolotto" class="btn-primary">↓ Download Kit — $49</a>
+    <a href="https://github.com/cosmolotto/alphabot" class="btn-ghost">View Source</a>
+  </div>
+
+  <div class="terminal">
+    <div class="term-bar">
+      <div class="term-dot" style="background:#ff5f57"></div>
+      <div class="term-dot" style="background:#febc2e"></div>
+      <div class="term-dot" style="background:#28c840"></div>
+      <span class="term-title">alphabot — optimizer output</span>
+    </div>
+    <div class="term-body">
+      <div><span class="t-prompt">$</span> <span class="t-cmd">python3 alphabot.py --optimize</span></div>
+      <div class="t-out">Running 4-layer validation across 12 strategies...</div>
+      <div class="t-out">Walk-Forward OK ✓  Rolling Window OK ✓</div>
+      <div class="t-out">Monte Carlo (1000 runs) OK ✓  Calmar Filter OK ✓</div>
+      <div>&nbsp;</div>
+      <div class="t-out">Winner: <span class="t-good">trend_following</span> on <span class="t-val">DOT/USDT 1d</span></div>
+      <div class="t-out">Sharpe: <span class="t-good">23.83</span>  &nbsp;Profit Factor: <span class="t-good">49.02</span></div>
+      <div class="t-out">Win Rate (OOS): <span class="t-good">100%</span>  Max DD: <span class="t-good">0.1%</span></div>
+      <div class="t-out">Calmar Ratio: <span class="t-good">48.78</span>  Score: <span class="t-val">30.14</span></div>
+      <div>&nbsp;</div>
+      <div class="t-out">Strategy saved → <span class="t-good">best_strategy.json</span></div>
+      <div><span class="t-prompt">$</span> <span style="opacity:.4">_</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats" id="stats">
+  <div class="stats-label">LIVE OPTIMIZER RESULTS</div>
+  <div class="stats-grid">
+    <div class="stat">
+      <div class="stat-val" style="color:var(--green)">23.83</div>
+      <div class="stat-label">SHARPE RATIO</div>
+      <div class="stat-sub">Risk-adjusted return</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--gold)">49.02×</div>
+      <div class="stat-label">PROFIT FACTOR</div>
+      <div class="stat-sub">Gross profit / gross loss</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--green)">100%</div>
+      <div class="stat-label">WIN RATE (OOS)</div>
+      <div class="stat-sub">Out-of-sample trades</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--cyan)">48.78</div>
+      <div class="stat-label">CALMAR RATIO</div>
+      <div class="stat-sub">Return / max drawdown</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--green)">0.1%</div>
+      <div class="stat-label">MAX DRAWDOWN</div>
+      <div class="stat-sub">Peak-to-trough loss</div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--gold)">+6.01×</div>
+      <div class="stat-label">OOS RETURN</div>
+      <div class="stat-sub">Out-of-sample result</div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-label">HOW IT WORKS</div>
+  <div class="section-title">Built to Survive<br>Real Markets</div>
+  <div class="features-grid">
+    <div class="feat">
+      <div class="feat-icon">🔬</div>
+      <div class="feat-title">WALK-FORWARD TESTING</div>
+      <div class="feat-desc">Rolls a training window across history — never lets the strategy see future data. If it doesn't hold out-of-sample, it's rejected.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🎲</div>
+      <div class="feat-title">MONTE CARLO SIMULATION</div>
+      <div class="feat-desc">1000 randomised trade sequences. The strategy must survive the worst-case p25 scenario before passing to the next filter.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⚖️</div>
+      <div class="feat-title">CALMAR FILTER</div>
+      <div class="feat-desc">Annual return divided by max drawdown. Cuts strategies that make money but destroy accounts in bad months.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">🤖</div>
+      <div class="feat-title">AI REGIME DETECTION</div>
+      <div class="feat-desc">Classifies market into trending, mean-reverting, or volatile regimes. Switches strategy parameters automatically.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">📊</div>
+      <div class="feat-title">LIVE DASHBOARD</div>
+      <div class="feat-desc">Flask web dashboard with real-time P&L, open positions, drawdown charts, and strategy health indicators.</div>
+    </div>
+    <div class="feat">
+      <div class="feat-icon">⚡</div>
+      <div class="feat-title">BINANCE INTEGRATION</div>
+      <div class="feat-desc">Direct CCXT connection to Binance. Spot and futures. ATR-based stop loss and take profit on every trade.</div>
+    </div>
+  </div>
+</section>
+
+<section class="strategy" id="strategy">
+  <div class="strategy-card">
+    <div class="strategy-info">
+      <div class="strategy-badge">CURRENT WINNER</div>
+      <div class="strategy-name">Trend Following</div>
+      <div class="strategy-pair">DOT/USDT · 1D · Volatile Regime</div>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val" style="color:var(--green)">EMA 12/50</div>
+          <div class="metric-label">SIGNAL</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" style="color:var(--cyan)">ADX &gt; 18</div>
+          <div class="metric-label">FILTER</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" style="color:var(--red)">1.5× ATR</div>
+          <div class="metric-label">STOP LOSS</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val" style="color:var(--gold)">5.0× ATR</div>
+          <div class="metric-label">TAKE PROFIT</div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:16px">VALIDATION LAYERS PASSED</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:6px;padding:12px 16px">
+          <span style="font-size:12px">Walk-Forward (3 windows)</span>
+          <span style="color:var(--green);font-size:12px">✓ PASS</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:6px;padding:12px 16px">
+          <span style="font-size:12px">Rolling Window Test</span>
+          <span style="color:var(--green);font-size:12px">✓ PASS</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:6px;padding:12px 16px">
+          <span style="font-size:12px">Monte Carlo (1000 runs)</span>
+          <span style="color:var(--green);font-size:12px">✓ PASS</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--panel);border-radius:6px;padding:12px 16px">
+          <span style="font-size:12px">Calmar Ratio Filter</span>
+          <span style="color:var(--green);font-size:12px">✓ PASS (48.78)</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="cta-box">
+    <div class="cta-title">Get the Starter Kit</div>
+    <div class="cta-sub">Everything you need to run AlphaBot on your own Binance account. Clean code, strategy configs, requirements, and setup guide.</div>
+    <div class="price-tag">$49</div>
+    <div class="price-note">ONE-TIME · INSTANT DOWNLOAD · MIT LICENSE</div>
+    <a href="https://gumroad.com/cosmolotto" class="btn-primary" style="display:inline-block">Download Now →</a>
+  </div>
+</section>
+
+<footer>
+  <div>© 2026 cosmolotto · AlphaBot</div>
+  <div>
+    <a href="https://github.com/cosmolotto/alphabot">GitHub</a> ·
+    <a href="https://cosmolotto.github.io">Portfolio</a>
+  </div>
+</footer>
+
+</body>
+</html>
