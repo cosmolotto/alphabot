@@ -1,0 +1,23 @@
+# Core trading
+ccxt>=4.2.0              # Multi-exchange connector (Binance, Bybit, OKX, etc.)
+
+# Data & math
+numpy>=1.26.0
+pandas>=2.1.0
+
+# Web dashboard
+flask>=3.0.0
+flask-cors>=4.0.0
+
+# HTTP (for Telegram notifications)
+requests>=2.31.0
+
+# Utilities
+python-dotenv>=1.0.0     # Load .env API keys
+
+# Optional: faster indicator computation
+# ta-lib>=0.4.28         # Uncomment if you install TA-Lib binary
+
+# Optional: ML hybrid strategy
+# scikit-learn>=1.4.0
+# xgboost>=2.0.0
