@@ -6,6 +6,9 @@
 import time
 import logging
 import threading
+import os
+import json
+import urllib.request
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -200,6 +203,45 @@ class TradingBot:
             )
             logger.info(msg)
             self._send_telegram(msg)
+            # Donate 5% of profitable trades to AidDrop
+            if result.pnl > 0:
+                self._aiddrop_donate(result.pnl, symbol)
+
+    def _aiddrop_donate(self, pnl: float, symbol: str):
+        """Donate 5% of trade profit to AidDrop humanitarian pool."""
+        aiddrop_enabled = os.environ.get('AIDDROP_ENABLED', 'false').lower() == 'true'
+        if not aiddrop_enabled:
+            return
+        aiddrop_url    = os.environ.get('AIDDROP_API_URL', 'https://aiddrop-api.onrender.com')
+        alphabot_key   = os.environ.get('ALPHABOT_API_KEY', '')
+        donation_pct   = float(os.environ.get('AIDDROP_DONATE_PCT', '0.05'))
+        donation_amount = round(pnl * donation_pct, 4)
+        if donation_amount <= 0:
+            return
+        try:
+            payload = json.dumps({
+                'source'    : 'alphabot',
+                'amount'    : donation_amount,
+                'usd_amount': donation_amount,
+                'note'      : f'5% of {symbol} profit ({pnl:.2f} USDT)'
+            }).encode()
+            req = urllib.request.Request(
+                aiddrop_url + '/api/donate',
+                data=payload,
+                headers={
+                    'Content-Type': 'application/json',
+                    'X-Api-Key'   : alphabot_key
+                },
+                method='POST'
+            )
+            with urllib.request.urlopen(req, timeout=8) as resp:
+                result_data = json.loads(resp.read())
+                if result_data.get('success'):
+                    logger.info(f"[AidDrop] Donated {donation_amount} MRV from {symbol} profit")
+                else:
+                    logger.warning(f"[AidDrop] Donation failed: {result_data}")
+        except Exception as e:
+            logger.warning(f"[AidDrop] Could not donate: {e}")
 
     def _send_telegram(self, message: str):
         if not self.cfg.enable_telegram or not self.cfg.telegram_token:
