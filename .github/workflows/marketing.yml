@@ -2,11 +2,16 @@ name: AlphaBot Marketing Automation
 
 on:
   schedule:
-    - cron: '0 10 * * *'
+    # Twitter: daily tip at 9am UTC
+    - cron: '0 9 * * *'
+    # Reddit: monitor 3x weekdays
     - cron: '0 9 * * 1-5'
     - cron: '0 14 * * 1-5'
     - cron: '0 19 * * 1-5'
+    # Reddit weekly promo: Wednesday 11am UTC
     - cron: '0 11 * * 3'
+    # Twitter weekly promo: Friday 10am UTC
+    - cron: '0 10 * * 5'
   workflow_dispatch:
     inputs:
       mode:
@@ -17,8 +22,44 @@ on:
         options:
           - reddit-monitor
           - reddit-promo
+          - twitter-tip
+          - twitter-promo
 
 jobs:
+  twitter-daily:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install tweepy
+      - name: Post daily tip
+        env:
+          AB_TWITTER_API_KEY: ${{ secrets.AB_TWITTER_API_KEY }}
+          AB_TWITTER_API_SECRET: ${{ secrets.AB_TWITTER_API_SECRET }}
+          AB_TWITTER_ACCESS_TOKEN: ${{ secrets.AB_TWITTER_ACCESS_TOKEN }}
+          AB_TWITTER_ACCESS_SECRET: ${{ secrets.AB_TWITTER_ACCESS_SECRET }}
+        run: python marketing/twitter_bot.py --mode tip
+
+  twitter-weekly-promo:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install tweepy
+      - name: Post weekly promo
+        env:
+          AB_TWITTER_API_KEY: ${{ secrets.AB_TWITTER_API_KEY }}
+          AB_TWITTER_API_SECRET: ${{ secrets.AB_TWITTER_API_SECRET }}
+          AB_TWITTER_ACCESS_TOKEN: ${{ secrets.AB_TWITTER_ACCESS_TOKEN }}
+          AB_TWITTER_ACCESS_SECRET: ${{ secrets.AB_TWITTER_ACCESS_SECRET }}
+        run: python marketing/twitter_bot.py --mode promo
+
   reddit-monitor:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
@@ -83,17 +124,26 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - run: pip install praw
+      - name: Install deps
+        run: pip install praw tweepy
       - name: Run selected bot
         env:
           REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
           REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          AB_TWITTER_API_KEY: ${{ secrets.AB_TWITTER_API_KEY }}
+          AB_TWITTER_API_SECRET: ${{ secrets.AB_TWITTER_API_SECRET }}
+          AB_TWITTER_ACCESS_TOKEN: ${{ secrets.AB_TWITTER_ACCESS_TOKEN }}
+          AB_TWITTER_ACCESS_SECRET: ${{ secrets.AB_TWITTER_ACCESS_SECRET }}
           BOT_MODE: ${{ inputs.mode }}
         run: |
           if [ "$BOT_MODE" = "reddit-monitor" ]; then
             python marketing/reddit_bot.py --mode monitor
           elif [ "$BOT_MODE" = "reddit-promo" ]; then
             python marketing/reddit_bot.py --mode promo
+          elif [ "$BOT_MODE" = "twitter-tip" ]; then
+            python marketing/twitter_bot.py --mode tip
+          elif [ "$BOT_MODE" = "twitter-promo" ]; then
+            python marketing/twitter_bot.py --mode promo
           fi
