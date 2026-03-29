@@ -1,0 +1,99 @@
+name: AlphaBot Marketing Automation
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+    - cron: '0 9 * * 1-5'
+    - cron: '0 14 * * 1-5'
+    - cron: '0 19 * * 1-5'
+    - cron: '0 11 * * 3'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Bot to run'
+        required: true
+        default: 'reddit-monitor'
+        type: choice
+        options:
+          - reddit-monitor
+          - reddit-promo
+
+jobs:
+  reddit-monitor:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install praw
+      - name: Restore reply log
+        uses: actions/cache@v4
+        with:
+          path: replied_ab.json
+          key: ab-reddit-replied-${{ github.run_id }}
+          restore-keys: ab-reddit-replied-
+      - name: Monitor and reply
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+        run: python marketing/reddit_bot.py --mode monitor
+      - name: Save reply log
+        uses: actions/cache/save@v4
+        with:
+          path: replied_ab.json
+          key: ab-reddit-replied-${{ github.run_id }}
+
+  reddit-weekly-promo:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install praw
+      - name: Restore promo log
+        uses: actions/cache@v4
+        with:
+          path: promo_log_ab.json
+          key: ab-reddit-promo-${{ github.run_id }}
+          restore-keys: ab-reddit-promo-
+      - name: Post weekly promo
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+        run: python marketing/reddit_bot.py --mode promo
+      - name: Save promo log
+        uses: actions/cache/save@v4
+        with:
+          path: promo_log_ab.json
+          key: ab-reddit-promo-${{ github.run_id }}
+
+  manual-run:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install praw
+      - name: Run selected bot
+        env:
+          REDDIT_CLIENT_ID: ${{ secrets.REDDIT_CLIENT_ID }}
+          REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
+          REDDIT_USERNAME: ${{ secrets.REDDIT_USERNAME }}
+          REDDIT_PASSWORD: ${{ secrets.REDDIT_PASSWORD }}
+          BOT_MODE: ${{ inputs.mode }}
+        run: |
+          if [ "$BOT_MODE" = "reddit-monitor" ]; then
+            python marketing/reddit_bot.py --mode monitor
+          elif [ "$BOT_MODE" = "reddit-promo" ]; then
+            python marketing/reddit_bot.py --mode promo
+          fi
